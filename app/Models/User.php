@@ -13,11 +13,12 @@ class User {
      * @return bool True عند النجاح, False عند الفشل
      */
     public function register($data) {
-        $this->db->query('INSERT INTO users (name, email, password_hash) VALUES(:name, :email, :password_hash)');
+        $this->db->query('INSERT INTO users (name, email, role_id, password_hash) VALUES(:name, :email, :role_id, :password_hash)');
         // ربط القيم
         $this->db->bind(':name', $data['name']);
         $this->db->bind(':email', $data['email']);
-        $this->db->bind(':password_hash', $data['password_hash']);
+        $this->db->bind(':role_id', $data['role_id']);
+        $this->db->bind(':password_hash', $data['password']);
 
         // تنفيذ الاستعلام
         if ($this->db->execute()) {

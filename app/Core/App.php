@@ -2,7 +2,7 @@
 // app/Core/App.php
 
 class App {
-    protected $currentController = 'DashboardController';
+    protected $currentController = 'HomeController';
     protected $currentMethod = 'index';
     protected $params = [];
 

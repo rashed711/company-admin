@@ -1,6 +1,8 @@
 <?php
-  // Load the bootstrap file
-  require_once '../app/bootstrap.php';
-  
-  // Init Core Library
-  $init = new App;
+// هذا الملف هو نقطة الدخول الوحيدة للتطبيق
+
+// تحميل ملف الإعداد والتشغيل الرئيسي
+require_once '../app/bootstrap.php';
+
+// تشغيل الكلاس الأساسي لبدء عملية التوجيه
+$init = new App;

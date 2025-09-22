@@ -4,6 +4,7 @@ class UsersController extends Controller {
     public function __construct() {
         // تحميل المودل الخاص بالمستخدمين
         $this->userModel = $this->model('User');
+        $this->permissionModel = $this->model('Permission');
     }
 
     public function register() {
@@ -57,11 +58,15 @@ class UsersController extends Controller {
             // التأكد من عدم وجود أخطاء قبل المتابعة
             if (empty($data['email_err']) && empty($data['name_err']) && empty($data['password_err']) && empty($data['confirm_password_err'])) {
                 // تشفير كلمة المرور
-                $data['password_hash'] = password_hash($data['password'], PASSWORD_DEFAULT);
+                $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+
+                // تعيين الدور الافتراضي للمستخدم الجديد
+                // ID 2 يمثل دور "User" الذي أنشأناه
+                $data['role_id'] = 2;
 
                 // تسجيل المستخدم عبر المودل
                 if ($this->userModel->register($data)) {
-                    flash('register_success', 'تم تسجيلك بنجاح، يمكنك الآن تسجيل الدخول');
+                    flash('register_success', 'تم تسجيلك بنجاح، يمكنك الآن تسجيل الدخول.');
                     redirect('users/login');
                 } else {
                     die('Something went wrong');
@@ -77,7 +82,11 @@ class UsersController extends Controller {
                 'name' => '',
                 'email' => '',
                 'password' => '',
-                'confirm_password' => ''
+                'confirm_password' => '',
+                'name_err' => '',
+                'email_err' => '',
+                'password_err' => '',
+                'confirm_password_err' => ''
             ];
             // تحميل الـ View
             $this->view('users/register', $data);
@@ -101,13 +110,6 @@ class UsersController extends Controller {
             if(empty($data['email'])) $data['email_err'] = 'الرجاء إدخال البريد الإلكتروني';
             if(empty($data['password'])) $data['password_err'] = 'الرجاء إدخال كلمة المرور';
 
-            // Check for user/email
-            if(empty($data['email_err']) && empty($data['password_err'])){
-                if(!$this->userModel->findUserByEmail($data['email'])){
-                    $data['email_err'] = 'البريد الإلكتروني غير مسجل';
-                }
-            }
-
             // Make sure errors are empty
             if(empty($data['email_err']) && empty($data['password_err'])){
                 // Validated, attempt to login
@@ -117,7 +119,7 @@ class UsersController extends Controller {
                     // Create Session
                     $this->createUserSession($loggedInUser);
                 } else {
-                    $data['password_err'] = 'كلمة المرور غير صحيحة';
+                    $data['email_err'] = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
                     $this->view('users/login', $data);
                 }
             } else {
@@ -136,6 +138,8 @@ class UsersController extends Controller {
         $_SESSION['user_id'] = $user->id;
         $_SESSION['user_email'] = $user->email;
         $_SESSION['user_name'] = $user->name;
+        // تحميل صلاحيات المستخدم وتخزينها في الجلسة
+        $_SESSION['permissions'] = $this->permissionModel->getEffectivePermissionSlugs($user->id);
         redirect('dashboard');
     }
 
@@ -143,6 +147,7 @@ class UsersController extends Controller {
         unset($_SESSION['user_id']);
         unset($_SESSION['user_email']);
         unset($_SESSION['user_name']);
+        unset($_SESSION['permissions']);
         session_destroy();
         redirect('users/login');
     }
